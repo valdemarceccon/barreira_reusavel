@@ -7,7 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public class ManipularArquivo implements Serializable {
+public class ManipularArquivo {
 
     public static void salvar(String nome, ListaInteiros objeto) throws IOException {
         final Path arquivo = Paths.get(nome);
@@ -30,6 +30,4 @@ public class ManipularArquivo implements Serializable {
 
         return lista;
     }
-
-
 }
