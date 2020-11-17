@@ -11,10 +11,11 @@ public class Trabalhadora extends Thread {
     private final Semaphore barreiraSaida;
     private final  Semaphore mutexInsercaoLista;
     private final  Semaphore mutexContador;
+    private Semaphore mutexCombinadora;
 
     public Trabalhadora(ArrayList<String> lista, Semaphore barreiraEntrada,
                         Semaphore barreiraSaida,
-                        Semaphore mutexInsercaoLista, Semaphore mutexContador) {
+                        Semaphore mutexInsercaoLista, Semaphore mutexContador, Semaphore mutexCombinadora) {
 
         this.listaArquivos = lista;
 
@@ -22,22 +23,23 @@ public class Trabalhadora extends Thread {
         this.barreiraSaida = barreiraSaida;
         this.mutexInsercaoLista = mutexInsercaoLista;
         this.mutexContador = mutexContador;
+        this.mutexCombinadora = mutexCombinadora;
     }
 
     public void run() {
         try {
             while (true) {
-                barreiraEntrada();
-
                 ListaInteiros lista = new ListaInteiros();
                 lista.popular();
                 criarArquivo(lista, "desordenado");
                 lista.ordenar();
-                String nomeOrdenado = criarArquivo(lista, "ordenado");
+                String nomeOrdenado = criarArquivo(lista, "ordenado" + Main.contadorUUID);
                 System.out.println("Arquivo criado pela: " + this.getNome());
 
                 inserirNaFilaDeArquivos(nomeOrdenado);
-                barreiraSaida();
+
+                barreiraEntrada();
+
             }
 
 
@@ -45,6 +47,7 @@ public class Trabalhadora extends Thread {
             e.printStackTrace();
         }
     }
+
 
     public void inserirNaFilaDeArquivos(String nomeOrdenado) {
         try {
@@ -66,14 +69,19 @@ public class Trabalhadora extends Thread {
     public void barreiraEntrada() {
         try {
             mutexContador.acquire();
+
             Main.contador++;
+            Main.contadorUUID++;
+            System.out.println("barreira entrada");
             if (Main.contador == Main.MAX_TRABALHADORAS) {
+                // avisar barreira aqui
+                System.out.println("fechou saida, abriu entrada");
                 barreiraSaida.acquire(); //fecha
                 barreiraEntrada.release(); //abre
             }
-            barreiraEntrada.acquire();
-            barreiraEntrada.release();
             mutexContador.release();
+            barreiraEntrada.acquire();
+        barreiraEntrada.release();
 
         } catch (Exception e) {
             System.out.println("Erro no mutex");
@@ -84,12 +92,13 @@ public class Trabalhadora extends Thread {
     public void barreiraSaida() {
         try {
             mutexContador.acquire();
-            Main.contador--;
+            Main.contador -= 1;
             if (Main.contador == 0) {
                 barreiraEntrada.acquire(); //fecha
                 barreiraSaida.release(); //abre
             }
             mutexContador.release();
+
             barreiraSaida.acquire();
             barreiraSaida.release();
 
@@ -98,6 +107,8 @@ public class Trabalhadora extends Thread {
         }
 
     }
+
+
 
     private String criarArquivo(ListaInteiros arquivo, String Nome) throws IOException {
         String output = String.format("%s_%s.txt", this.getNome(), Nome);
