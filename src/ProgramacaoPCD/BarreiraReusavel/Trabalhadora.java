@@ -4,18 +4,23 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.Semaphore;
 
-public class Trabalhadora extends Thread {
+public class Trabalhadora extends MaeDeTodasAsThreads {
 
     private final ArrayList<String> listaArquivos;
     private final Semaphore barreiraEntrada;
     private final Semaphore barreiraSaida;
     private final  Semaphore mutexInsercaoLista;
     private final  Semaphore mutexContador;
-    private Semaphore mutexCombinadora;
+    private final Semaphore mutexCombinadora;
+    private Semaphore mutexUUID;
 
-    public Trabalhadora(ArrayList<String> lista, Semaphore barreiraEntrada,
+    public Trabalhadora(ArrayList<String> lista,
+                        Semaphore barreiraEntrada,
                         Semaphore barreiraSaida,
-                        Semaphore mutexInsercaoLista, Semaphore mutexContador, Semaphore mutexCombinadora) {
+                        Semaphore mutexInsercaoLista,
+                        Semaphore mutexContador,
+                        Semaphore mutexCombinadora,
+                        Semaphore mutexUUID) {
 
         this.listaArquivos = lista;
 
@@ -24,6 +29,7 @@ public class Trabalhadora extends Thread {
         this.mutexInsercaoLista = mutexInsercaoLista;
         this.mutexContador = mutexContador;
         this.mutexCombinadora = mutexCombinadora;
+        this.mutexUUID = mutexUUID;
     }
 
     public void run() {
@@ -31,14 +37,18 @@ public class Trabalhadora extends Thread {
             while (true) {
                 barreiraEntrada();
 
-                ListaInteiros lista = new ListaInteiros();
-                lista.popular();
-                criarArquivo(lista, "desordenado");
-                lista.ordenar();
-                String nomeOrdenado = criarArquivo(lista, "ordenado" + Main.contadorUUID);
-                System.out.println("Arquivo criado pela: " + this.getNome());
+                ListaInteiros listaDesordenada = new ListaInteiros();
 
+                listaDesordenada.popular();
 
+                mutexUUID.acquire();
+                Main.contadorUUID++;
+                criarArquivo(listaDesordenada, "desordenado[" + Main.contadorUUID + "]");
+                listaDesordenada.ordenar();
+                String nomeOrdenado = criarArquivo(listaDesordenada, "ordenado[" + Main.contadorUUID + "]");
+                mutexUUID.release();
+
+                threadPrint("Arquivo criado");
                 inserirNaFilaDeArquivos(nomeOrdenado);
 
                 barreiraSaida();
@@ -53,18 +63,18 @@ public class Trabalhadora extends Thread {
 
     public void inserirNaFilaDeArquivos(String nomeOrdenado) {
         try {
-            System.out.println("Esperando para colocar o nome da lista" + getNome());
+            threadPrint("Esperando para colocar o nome da lista");
 
             mutexInsercaoLista.acquire();
 
             listaArquivos.add(nomeOrdenado);
 
             mutexInsercaoLista.release();
-
-            System.out.println("Arquivo inserido na lista" + getNome());
+            
+            threadPrint("Arquivo inserido na lista");
 
         } catch (Exception e) {
-            System.out.println("Erro no mutex");
+            threadPrint("Erro no mutex");
         }
     }
 
@@ -73,15 +83,11 @@ public class Trabalhadora extends Thread {
             mutexContador.acquire();
 
             Main.contador++;
-            Main.contadorUUID++;
-            System.out.println("barreira entrada");
-            if (Main.contador == Main.MAX_TRABALHADORAS) {
-                mutexCombinadora.release();
-                System.out.println("\n");
-                System.out.println(mutexCombinadora.toString());
-                System.out.println("\n");
+            threadPrint("Na entrada");
 
-                System.out.println("fechou saida, abriu entrada");
+            if (Main.contador == Main.MAX_TRABALHADORAS) {
+
+                threadPrint("fechou saida, abriu entrada");
                 barreiraSaida.acquire(); //fecha
                 barreiraEntrada.release(); //abre
             }
@@ -90,7 +96,7 @@ public class Trabalhadora extends Thread {
         barreiraEntrada.release();
 
         } catch (Exception e) {
-            System.out.println("Erro no mutex");
+            threadPrint("Erro no mutex");
         }
 
     }
@@ -99,6 +105,11 @@ public class Trabalhadora extends Thread {
         try {
             mutexContador.acquire();
             Main.contador -= 1;
+
+            threadPrint("Thread na saida");
+            mutexCombinadora.release();
+            threadPrint(mutexCombinadora.toString());
+
             if (Main.contador == 0) {
                 barreiraEntrada.acquire(); //fecha
                 barreiraSaida.release(); //abre
@@ -109,12 +120,10 @@ public class Trabalhadora extends Thread {
             barreiraSaida.release();
 
         } catch (Exception e) {
-            System.out.println("Erro no mutex");
+            threadPrint("Erro no mutex");
         }
 
     }
-
-
 
     private String criarArquivo(ListaInteiros arquivo, String Nome) throws IOException {
         String output = String.format("%s_%s.txt", this.getNome(), Nome);
@@ -122,8 +131,5 @@ public class Trabalhadora extends Thread {
         return output;
     }
 
-    public String getNome() {
-        return String.format("[%s]", this.getName());
-    }
 
 }

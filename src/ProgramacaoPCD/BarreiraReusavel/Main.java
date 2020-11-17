@@ -14,6 +14,7 @@ public class Main {
     public static void main(String[] args) {
 
         Semaphore mutexInsercaoLista = new Semaphore(1);
+        Semaphore mutexUUID = new Semaphore(1);
         Semaphore mutexContador = new Semaphore(1);
         Semaphore barreiraEntrada = new Semaphore(0);
         Semaphore barreiraSaida = new Semaphore(1);
@@ -23,13 +24,17 @@ public class Main {
         ArrayList<String> listaArquivos = new ArrayList<>();
 
         Trabalhadora trabalhadora1 =
-                new Trabalhadora(listaArquivos, barreiraEntrada, barreiraSaida, mutexInsercaoLista, mutexContador, semaforoCombinadora);
+                new Trabalhadora(listaArquivos, barreiraEntrada,
+                        barreiraSaida, mutexInsercaoLista, mutexContador, semaforoCombinadora, mutexUUID);
         Trabalhadora trabalhadora2 =
-                new Trabalhadora(listaArquivos, barreiraEntrada, barreiraSaida, mutexInsercaoLista, mutexContador, semaforoCombinadora);
+                new Trabalhadora(listaArquivos, barreiraEntrada,
+                        barreiraSaida, mutexInsercaoLista, mutexContador, semaforoCombinadora, mutexUUID);
         Trabalhadora trabalhadora3 =
-                new Trabalhadora(listaArquivos, barreiraEntrada, barreiraSaida, mutexInsercaoLista, mutexContador, semaforoCombinadora);
+                new Trabalhadora(listaArquivos, barreiraEntrada,
+                        barreiraSaida, mutexInsercaoLista, mutexContador, semaforoCombinadora, mutexUUID);
         Trabalhadora trabalhadora4 =
-                new Trabalhadora(listaArquivos, barreiraEntrada, barreiraSaida, mutexInsercaoLista, mutexContador, semaforoCombinadora);
+                new Trabalhadora(listaArquivos, barreiraEntrada,
+                        barreiraSaida, mutexInsercaoLista, mutexContador, semaforoCombinadora, mutexUUID);
 
         Combinadora combinadora = new Combinadora(listaArquivos, semaforoCombinadora);
 
