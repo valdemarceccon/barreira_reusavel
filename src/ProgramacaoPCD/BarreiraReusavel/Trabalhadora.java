@@ -29,6 +29,8 @@ public class Trabalhadora extends Thread {
     public void run() {
         try {
             while (true) {
+                barreiraEntrada();
+
                 ListaInteiros lista = new ListaInteiros();
                 lista.popular();
                 criarArquivo(lista, "desordenado");
@@ -36,10 +38,10 @@ public class Trabalhadora extends Thread {
                 String nomeOrdenado = criarArquivo(lista, "ordenado" + Main.contadorUUID);
                 System.out.println("Arquivo criado pela: " + this.getNome());
 
+
                 inserirNaFilaDeArquivos(nomeOrdenado);
 
-                barreiraEntrada();
-
+                barreiraSaida();
             }
 
 
@@ -74,7 +76,11 @@ public class Trabalhadora extends Thread {
             Main.contadorUUID++;
             System.out.println("barreira entrada");
             if (Main.contador == Main.MAX_TRABALHADORAS) {
-                // avisar barreira aqui
+                mutexCombinadora.release();
+                System.out.println("\n");
+                System.out.println(mutexCombinadora.toString());
+                System.out.println("\n");
+
                 System.out.println("fechou saida, abriu entrada");
                 barreiraSaida.acquire(); //fecha
                 barreiraEntrada.release(); //abre

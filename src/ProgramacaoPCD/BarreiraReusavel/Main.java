@@ -1,6 +1,8 @@
 package ProgramacaoPCD.BarreiraReusavel;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.concurrent.Semaphore;
 
 public class Main {
@@ -15,23 +17,21 @@ public class Main {
         Semaphore mutexContador = new Semaphore(1);
         Semaphore barreiraEntrada = new Semaphore(0);
         Semaphore barreiraSaida = new Semaphore(1);
-        Semaphore mutexCombinadora = new Semaphore(-3);
+        Semaphore semaforoCombinadora = new Semaphore(0);
 
 
         ArrayList<String> listaArquivos = new ArrayList<>();
 
         Trabalhadora trabalhadora1 =
-                new Trabalhadora(listaArquivos, barreiraEntrada, barreiraSaida, mutexInsercaoLista, mutexContador, mutexCombinadora);
+                new Trabalhadora(listaArquivos, barreiraEntrada, barreiraSaida, mutexInsercaoLista, mutexContador, semaforoCombinadora);
         Trabalhadora trabalhadora2 =
-                new Trabalhadora(listaArquivos, barreiraEntrada, barreiraSaida, mutexInsercaoLista, mutexContador, mutexCombinadora);
+                new Trabalhadora(listaArquivos, barreiraEntrada, barreiraSaida, mutexInsercaoLista, mutexContador, semaforoCombinadora);
         Trabalhadora trabalhadora3 =
-                new Trabalhadora(listaArquivos, barreiraEntrada, barreiraSaida, mutexInsercaoLista, mutexContador, mutexCombinadora);
+                new Trabalhadora(listaArquivos, barreiraEntrada, barreiraSaida, mutexInsercaoLista, mutexContador, semaforoCombinadora);
         Trabalhadora trabalhadora4 =
-                new Trabalhadora(listaArquivos, barreiraEntrada, barreiraSaida, mutexInsercaoLista, mutexContador, mutexCombinadora);
+                new Trabalhadora(listaArquivos, barreiraEntrada, barreiraSaida, mutexInsercaoLista, mutexContador, semaforoCombinadora);
 
-        Combinadora combinadora =
-                new Combinadora(listaArquivos, mutexInsercaoLista, barreiraEntrada, barreiraSaida, mutexContador);
-
+        Combinadora combinadora = new Combinadora(listaArquivos, semaforoCombinadora);
 
         trabalhadora1.start();
         trabalhadora2.start();
@@ -40,7 +40,4 @@ public class Main {
         combinadora.start();
     }
 
-    public static void deletarArquivos() {
-
-    }
 }
